@@ -1,7 +1,7 @@
 /**
  * Sabian Uploader
  * @description Meant to simplify the file upload process from drag and drop functionality to real time file upload alerts and events
- * @version 1.4.9
+ * @version 1.4.9.2
  * @author Brian Sabana
  * @link http://briansabana.co.ke
  * @dependancies jquery-v1.3+,bootstrap,jquery.ui.widget.js,jquery.iframe-transport.js",jquery.fileupload.js,file-upload.css
@@ -72,7 +72,7 @@
              * Called when the file is loading
              * @param fileContainer The file loader container identified by file_upload_loader
              */
-            on_item_progress_loading: function (fileContainer) {
+            on_item_progress_loading: function (fileContainer,percent) {
             },
             /**
              * Called when the file is finished loaded
@@ -80,6 +80,15 @@
              */
             on_item_progress_loaded: function (fileContainer) {
             },
+			
+			/**
+             * Called when the file is on the upload queue
+             * @param fileContainer The file loader container identified by file_upload_loader
+             */
+			on_item_before_upload : function(fileContainer) {
+			},
+			
+			
         }, options);
 
         var ul = $(optf.file_upload_container);
@@ -110,7 +119,7 @@
 
         var upload_drop_zone = $(optf.file_upload_dropzone);
 
-        var upload_loader = (optf.file_upload_loader != null) ? $(optf.file_upload_loader) : null;
+        var upload_loader = (optf.file_upload_loader != null) ? optf.file_upload_loader : null;
 
         var col_class = optf.file_item_column_class;
 
@@ -129,6 +138,8 @@
         var on_item_removed = optf.on_item_removed;
 
         var on_item_loaded = optf.on_item_loaded;
+		
+		var on_item_before_upload=optf.on_item_before_upload;
 
         var selected_id = -1;
 
@@ -156,7 +167,7 @@
                 var tpl = $('<div class="col-md-4"><div class="img-thumbnail sabian_img_upl_box"><div class="sabian_preview"></div><a href="#" class="badge-corner badger badge-corner-base" id="" style="display:none"><span class="fa fa-check"></span></a><img class="img-responsive img-upload" src="http://localhost/tulia/images/icons/photo.png" style="display:none" data-src=""/><div class="progress progress-lg img-progress"><div class="progress-bar progress-bar-base" role="progressbar" style="width:0%"><span class="sr-only">0% complete</span></div></div></div></div>');
 
                 if (upload_loader != null) {
-                    tpl = upload_loader;
+                    tpl = $(upload_loader);
                 }
 
                 var imgPrev = tpl.find('img');
@@ -176,6 +187,8 @@
 
                 // Add the HTML to the UL element
                 data.context = tpl.prependTo(ul);
+				
+				handle_file_before_loaded(data.context);
 
                 // Automatically upload the file once it is added to the queue
                 data.submit();
@@ -188,7 +201,7 @@
 
                 var parent = data.context;
 
-                var imgLoader = data.context.find('div.progress-bar-base');
+                var imgLoader = data.context.find('div.progress-bar');
 
                 var span = data.context.find('span.sr-only');
                 
@@ -200,7 +213,7 @@
                 var pr = progress + '% complete';
 
                 // Update progress
-                handle_file_progress_loading(parent);
+                handle_file_progress_loading(parent,progress);
 
                 span.text(pr);
 
@@ -229,7 +242,7 @@
 
                 var container = data.context;
 
-                var imgLoader = data.context.find('div.progress-bar-base');
+                var imgLoader = data.context.find('div.progress-bar');
 
                 if ($.isNumeric(res))
                 {
@@ -259,9 +272,9 @@
                 // Something has gone wrong!
                 data.context.find('span.sr-only').text("Something went wrong");
 
-                data.context.find('div.progress-bar-base').css("width", "100%");
+                data.context.find('div.progress-bar').css("width", "100%");
 
-                data.context.find('div.progress-bar-base').addClass('upl_error');
+                data.context.find('div.progress-bar').addClass('upl_error');
 
                 handle_file_error(data.context, "Could not connect to server");
 
@@ -277,8 +290,12 @@
             e.preventDefault();
 
         });
-
-
+		
+		function handle_file_before_loaded(cont){
+			
+			optf.on_item_before_upload(cont);	
+		}
+		
         function handle_file_error(imgContainer, message) {
 
             optf.on_item_error(imgContainer, message);
@@ -288,9 +305,9 @@
             optf.on_item_loaded(id, imgContainer, imgSource);
         }
 
-        function handle_file_progress_loading(container) {
+        function handle_file_progress_loading(container,percent) {
 
-            optf.on_item_progress_loading(container);
+            optf.on_item_progress_loading(container,percent);
         }
 
         function handle_file_progress_loaded(container) {

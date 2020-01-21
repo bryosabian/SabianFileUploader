@@ -1,7 +1,7 @@
 /**
  * Sabian Uploader
  * @description Meant to simplify the file upload process from drag and drop functionality to real time file upload alerts and events
- * @version 1.4.9.2
+ * @version 1.5.0
  * @author Brian Sabana
  * @link http://briansabana.co.ke
  * @dependancies jquery-v1.3+,bootstrap,jquery.ui.widget.js,jquery.iframe-transport.js",jquery.fileupload.js,file-upload.css

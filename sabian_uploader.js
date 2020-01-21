@@ -72,7 +72,7 @@
              * Called when the file is loading
              * @param fileContainer The file loader container identified by file_upload_loader
              */
-            on_item_progress_loading: function (fileContainer,percent) {
+            on_item_progress_loading: function (fileContainer, percent) {
             },
             /**
              * Called when the file is finished loaded
@@ -80,15 +80,12 @@
              */
             on_item_progress_loaded: function (fileContainer) {
             },
-			
-			/**
+            /**
              * Called when the file is on the upload queue
              * @param fileContainer The file loader container identified by file_upload_loader
              */
-			on_item_before_upload : function(fileContainer) {
-			},
-			
-			
+            on_item_before_upload: function (fileContainer) {
+            },
         }, options);
 
         var ul = $(optf.file_upload_container);
@@ -138,8 +135,8 @@
         var on_item_removed = optf.on_item_removed;
 
         var on_item_loaded = optf.on_item_loaded;
-		
-		var on_item_before_upload=optf.on_item_before_upload;
+
+        var on_item_before_upload = optf.on_item_before_upload;
 
         var selected_id = -1;
 
@@ -160,6 +157,12 @@
             dropZone: upload_drop_zone,
             // This function is called when a file is added to the queue;
             // either via the browse button, or via drag/drop:
+
+            beforeSend: function (xhr) {
+                console.log("Sabian UPL Before add");
+                //xhr.setRequestHeader("Accept", "application/json");
+                //xhr.setRequestHeader("Content-type", "application/json; charset=utf-8");
+            },
             add: function (e, data) {
 
                 var file = data.files[0];
@@ -187,8 +190,8 @@
 
                 // Add the HTML to the UL element
                 data.context = tpl.prependTo(ul);
-				
-				handle_file_before_loaded(data.context);
+
+                handle_file_before_loaded(data.context);
 
                 // Automatically upload the file once it is added to the queue
                 data.submit();
@@ -203,80 +206,61 @@
 
                 var imgLoader = data.context.find('div.progress-bar');
 
-                var span = data.context.find('span.sr-only');
-                
+                var span = data.context.find('.progress_text');
+
                 if (progress == 100) {
 
                     handle_file_progress_loaded(parent);
                 }
 
                 var pr = progress + '% complete';
-
-                // Update progress
-                handle_file_progress_loading(parent,progress);
-
+                
                 span.text(pr);
 
                 imgLoader.css("width", progress + "%");
+                
+                // Update progress
+                handle_file_progress_loading(parent, progress);
 
             },
             done: function (e, data) {
-
-                try {
-
-                    var all_res = $.parseJSON($.trim(data.result));
-
-                } catch (err) {
-
-                    handle_file_error(data.context, "There seems to be an error with the server. Check console for more");
-
-                    console.log(data.result);
-
-                    return;
-
-                }
-
-                var res = all_res.id;
-
-                var source = all_res.source;
-
-                var container = data.context;
-
-                var imgLoader = data.context.find('div.progress-bar');
-
-                if ($.isNumeric(res))
-                {
-                    handle_file_loaded(res, container, all_res);
-                }
-                else
-                {
-                    imgLoader.attr("id", -1);
-
-                    imgLoader.attr("data_id", -1);
-
-                    imgLoader.css("width", "100%");
-
-                    imgLoader.addClass('upl_error');
-
-                    data.context.find('span.sr-only').text("An Error Occured");
-
-                    handle_file_error(container, all_res.status);
-
-                }
-
-
-                //alert(res);
-
+                handle_file_loaded(data.jqXHR.status, data.context, data.result);
             },
             fail: function (e, data) {
+                var printErrors = false;
+
                 // Something has gone wrong!
-                data.context.find('span.sr-only').text("Something went wrong");
+                data.context.find('.progress_text').text("Something went wrong");
 
                 data.context.find('div.progress-bar').css("width", "100%");
 
                 data.context.find('div.progress-bar').addClass('upl_error');
 
-                handle_file_error(data.context, "Could not connect to server");
+                var error = "Could not connect to server";
+                if (data != null && data.errorThrown != null && data.errorThrown != "") {
+                    error = data.errorThrown;
+                }
+                if (data.jqXHR != undefined && data.jqXHR != null) {
+                    error = data.jqXHR.responseText;
+                }
+
+                if (printErrors) {
+                    var cache = [];
+                    var dString = JSON.stringify(data, function (key, value) {
+                        if (typeof value === 'object' && value !== null) {
+                            if (cache.indexOf(value) !== -1) {
+                                // Duplicate reference found, discard key
+                                return;
+                            }
+                            // Store value in our collection
+                            cache.push(value);
+                        }
+                        return value;
+                    });
+                    cache = null; // Enable garbage collection
+                    console.error("Data error " + dString);
+                }
+                handle_file_error(data.context, error);
 
             }
 
@@ -290,12 +274,12 @@
             e.preventDefault();
 
         });
-		
-		function handle_file_before_loaded(cont){
-			
-			optf.on_item_before_upload(cont);	
-		}
-		
+
+        function handle_file_before_loaded(cont) {
+
+            optf.on_item_before_upload(cont);
+        }
+
         function handle_file_error(imgContainer, message) {
 
             optf.on_item_error(imgContainer, message);
@@ -305,9 +289,9 @@
             optf.on_item_loaded(id, imgContainer, imgSource);
         }
 
-        function handle_file_progress_loading(container,percent) {
+        function handle_file_progress_loading(container, percent) {
 
-            optf.on_item_progress_loading(container,percent);
+            optf.on_item_progress_loading(container, percent);
         }
 
         function handle_file_progress_loaded(container) {

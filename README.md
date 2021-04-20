@@ -1,5 +1,7 @@
 # SabianFileUploader
-JQuery PlugIn for uploading files to the server
+JQuery PlugIn for uploading files to the server.
+
+Meant to simplify the file upload process from drag and drop functionality to real time file upload alerts and events
 
 ```javascript
 $('#fileArea').sabian_uploader(
